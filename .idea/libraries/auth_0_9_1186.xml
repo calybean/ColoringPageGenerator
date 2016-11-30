@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="auth-0.9.1186">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.adobe.creativesdk.foundation/auth/0.9.1186/res" />
+      <root url="jar://$PROJECT_DIR$/app/build/intermediates/exploded-aar/com.adobe.creativesdk.foundation/auth/0.9.1186/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

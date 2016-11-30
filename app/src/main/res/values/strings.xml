@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Coloring Page Generator</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="adobe_api_key">27d790c872ad49778775a3da3446ae3d</string>
+    <string name="adobe_client_secret">c7eb5561-3530-405d-b9d2-b4b29e840530</string>
+</resources>
