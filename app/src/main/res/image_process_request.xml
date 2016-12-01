@@ -1,0 +1,3 @@
+<image_process_call><lang>en</lang><image_url order="1">http://pho.to/parrot.jpg</image_url><methods_list><method order="1"><name>desaturation</name></method><method order="2"><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);border_strength=20;border_width=3</params></method></methods_list><result_format>png</result_format><result_size>600</result_size></image_process_call>
+
+<image_process_call><image_url>https://dl.dropbox.com/u/35054895/my/parrot/parrot2.jpg</image_url><methods_list><method><name>animated_effect</name><params>template_name=blinking</params></method></methods_list><animation_frames_count>5</animation_frames_count><animation_speed_factor>10</animation_speed_factor></image_process_call>
