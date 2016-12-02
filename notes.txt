@@ -1,0 +1,46 @@
+Coloring Page Generator
+———————————————
+
+php code to generate SHA1: 
+
+<?php
+$xml = '<image_process_call><image_url>http://blog.nuraypictures.com/wp-content/uploads/2013/11/Ron-Swanson.jpg</image_url><methods_list><method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>';
+
+echo hash_hmac('SHA1', $xml, '89f7b271b9ef0cde1e9e5932b71eb7e9');
+
+// cartoon:
+// <method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method>
+
+// ink:
+// <method><name>ink</name><params>black_area=0;</params></method>
+
+———————————————
+
+straight xml: 
+
+<image_process_call><image_url>http://blog.nuraypictures.com/wp-content/uploads/2013/11/Ron-Swanson.jpg</image_url><methods_list><method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>
+
+formatted xml:
+
+<image_process_call>
+    <image_url>http://blog.nuraypictures.com/wp-content/uploads/2013/11/Ron-Swanson.jpg</image_url>
+    <methods_list>
+        <method><name>cartoon</name>
+            <params>fill_solid_color=1;target_color=(255,255,255);</params>
+        </method>
+    </methods_list>
+    <result_format>png</result_format>
+    <result_size>1500</result_size>
+</image_process_call>
+
+———————————---
+
+Full API call: 
+
+http://opeapi.ws.pho.to/addtask/?data=<image_process_call><image_url>http://blog.nuraypictures.com/wp-content/uploads/2013/11/Ron-Swanson.jpg</image_url><methods_list><method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>&sign_data=fada3e244de49c7e35d1c3714ca87e49d0467185&app_id=5fe41de1c37308788ee96982d08e1b72&key=89f7b271b9ef0cde1e9e5932b71eb7e9
+
+
+
+
+
+
