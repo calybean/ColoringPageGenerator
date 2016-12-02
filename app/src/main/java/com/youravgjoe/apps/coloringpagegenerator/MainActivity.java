@@ -15,6 +15,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -45,6 +46,33 @@ public class MainActivity extends AppCompatActivity {
     private static final String XML_PART_1 = "<image_process_call><image_url>";
     private static final String XML_PART_2 = "</image_url><methods_list><method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
+    // todo: clean this up when you decide which one to use
+
+    // testing different methods of photo editing:
+
+    // 1. cartoon + deblurring
+    private static final String XML_PART_2_1 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 2. more different cartoon
+    private static final String XML_PART_2_2 = "</image_url><methods_list><method><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 3. adaptive cartoon + cartoon
+    private static final String XML_PART_2_3 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 4. adaptive cartoon + cartoon with anistropic=true
+    private static final String XML_PART_2_4 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 5. deblurring + adaptive cartoon + cartoon with anistropic=true
+    private static final String XML_PART_2_5 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>adaptive_cartoon</name></method><method order=\"3\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 6. desaturation + deblurring + adaptive cartoon + cartoon with anistropic=true
+    private static final String XML_PART_2_6 = "</image_url><methods_list><method order=\"1\"><name>desaturation</name></method><method order=\"2\"><name>deblurring</name></method><method order=\"3\"><name>adaptive_cartoon</name></method><method order=\"4\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // change this one to the one you're testing
+    private static final String XML_TO_USE = XML_PART_2_6;
+
+    private int mRetryCount;
+
     CoordinatorLayout mCoordinatorLayout;
     ImageView mImageView;
     EditText mInput;
@@ -63,18 +91,15 @@ public class MainActivity extends AppCompatActivity {
         mInput = (EditText) findViewById(R.id.input);
         mDialog = new ProgressDialog(this);
 
-        try {
-            String fullXml = XML_PART_1 + mInput.getText().toString() + XML_PART_2;
-            String sha1 = hmacSha1(fullXml, getResources().getString(R.string.key));
-            Log.d("XML hmacSha1", sha1);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Button mConvertButton = (Button) findViewById(R.id.convert);
-        mConvertButton.setOnClickListener(new View.OnClickListener() {
+        Button convertButton = (Button) findViewById(R.id.convert);
+        convertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // hide keyboard
+                mInput.clearFocus();
+                InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(mImageView.getWindowToken(), 0);
+
                 String input = mInput.getText().toString().trim();
 
                 // check for invalid input
@@ -87,10 +112,26 @@ public class MainActivity extends AppCompatActivity {
                     input = "http://" + input;
                 }
 
-                String fullXml = XML_PART_1 + input + XML_PART_2;
+                String fullXml = XML_PART_1 + input + XML_TO_USE;
+
+                mRetryCount = 0;
 
                 // call task to start the photo conversion process
                 new ConvertPhotoTask().execute(fullXml);
+            }
+        });
+
+        ImageButton clearButton = (ImageButton) findViewById(R.id.clear);
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // clear input
+                mInput.setText("");
+                // set focus to input
+                mInput.requestFocus();
+                // show keyboard
+                InputMethodManager keyboard = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                keyboard.showSoftInput(mInput, 0);
             }
         });
     }
@@ -135,6 +176,14 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(result);
 
             if (result == null) {
+                mDialog.hide();
+                return;
+            }
+
+            if (!result.contains("<status>OK</status>")) {
+                Log.d(TAG, "Error converting image: " + result);
+                Toast.makeText(getApplicationContext(), "Error converting image: " + result, Toast.LENGTH_LONG).show();
+                mDialog.hide();
                 return;
             }
 
@@ -173,10 +222,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
-
-            Log.d(TAG, result);
-
             if (result == null) {
+                mDialog.hide();
                 return;
             }
             if (result.contains("Bad Request")) {
@@ -187,6 +234,13 @@ public class MainActivity extends AppCompatActivity {
             // if the task is still running, call this same task again, and end this one
             if (result.contains("InProgress")) {
                 new GetConvertedPhotoUrlTask().execute(mRequestId);
+//                Log.d(TAG, "Task still in progress, trying again...");
+                mRetryCount++;
+
+                if (mRetryCount == 30) {
+                    mDialog.setMessage("Still working...");
+                }
+
                 return;
             }
 
@@ -234,10 +288,8 @@ public class MainActivity extends AppCompatActivity {
 
             mImageView.setImageBitmap(bitmap);
 
-            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(mImageView.getWindowToken(), 0);
-
             Log.d(TAG, "getConvertedPhotoTask finished");
+            Log.d(TAG, "retry count: " + mRetryCount);
         }
     }
 
