@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Coloring Page Generator</string>
     <string name="action_settings">Settings</string>
-    
+
+    <!--Pho.to api:-->
     <string name="app_id">5fe41de1c37308788ee96982d08e1b72</string>
-    <string name="api_key">89f7b271b9ef0cde1e9e5932b71eb7e9</string>
+    <string name="key">89f7b271b9ef0cde1e9e5932b71eb7e9</string>
 </resources>
