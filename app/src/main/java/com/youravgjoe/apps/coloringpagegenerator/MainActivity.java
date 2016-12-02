@@ -14,15 +14,9 @@ import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -49,9 +43,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String XML_PART_1 = "<image_process_call><image_url>";
     private static final String XML_PART_2 = "</image_url><methods_list><method><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
-    private XmlPullParserFactory mXmlFactoryObject;
-    private XmlPullParser mParser;
-
     CoordinatorLayout mCoordinatorLayout;
     ImageView mImageView;
     EditText mInput;
@@ -64,13 +55,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        try {
-            mXmlFactoryObject = XmlPullParserFactory.newInstance();
-            mParser = mXmlFactoryObject.newPullParser();
-        } catch (XmlPullParserException e) {
-            e.printStackTrace();
-        }
 
         mCoordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator_layout);
         mImageView = (ImageView) findViewById(R.id.image_view);
@@ -89,24 +73,29 @@ public class MainActivity extends AppCompatActivity {
         mConvertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mInput.getText().toString().isEmpty()) {
+                String input = mInput.getText().toString().trim();
+
+                // check for invalid input
+                if (!URLUtil.isValidUrl("http://" + input)) {
+                    Toast.makeText(v.getContext(), "URL is invalid", Toast.LENGTH_LONG).show();
                     return;
                 }
-
-                String input = mInput.getText().toString().trim();
-                if (URLUtil.isValidUrl(input)) {
-                    String fullXml = XML_PART_1 + input + XML_PART_2;
-
-                    // call task to start the photo conversion process
-                    convertPhotoTask.execute(fullXml);
+                // make sure it starts with http or https
+                if (!input.startsWith("http://") && !input.startsWith("https://")) {
+                    input = "http://" + input;
                 }
+
+                String fullXml = XML_PART_1 + input + XML_PART_2;
+
+                // call task to start the photo conversion process
+                new ConvertPhotoTask().execute(fullXml);
             }
         });
     }
 
     // AsyncTask #1
 
-    AsyncTask<String, Void, String> convertPhotoTask = new AsyncTask<String, Void, String>() {
+    class ConvertPhotoTask extends AsyncTask<String, Void, String> {
         @Override
         protected void onPreExecute() {
             // keep this dialog up until all 3 tasks are complete
@@ -143,39 +132,19 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
 
-            Log.d(TAG, result);
-            Log.d(TAG, "convertPhotoTask finished");
-
-            InputStream in = new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
-
-            try {
-                mParser.setInput(in, null);
-
-//                String requestId = parseXml(result, true); // yes, we need the request id
-
-                String requestId = result.substring(result.indexOf("<request_id>") + 12,result.indexOf("</request_id>")); // add 12 so we don't get tag with value
-
-                /*
-                <image_process_response>
-                    <request_id>010afc13-6bba-44dd-b278-4f3bd1e41946</request_id>
-                    <status>OK</status>
-                    <description />
-                    <err_code>0</err_code>
-                </image_process_response>
-                */
-
-                // now that we have the request id, call the next task to get converted image url
-                getConvertedPhotoUrlTask.execute(requestId);
-
-            } catch (XmlPullParserException e) {
-                e.printStackTrace();
+            if (result == null) {
+                return;
             }
+
+            String requestId = result.substring(result.indexOf("<request_id>") + 12,result.indexOf("</request_id>")); // add 12 so we don't get tag with value
+            // now that we have the request id, call the next task to get converted image url
+            new GetConvertedPhotoUrlTask().execute(requestId);
         }
-    };
+    }
 
     // AsyncTask #2
 
-    AsyncTask<String, Void, String> getConvertedPhotoUrlTask = new AsyncTask<String, Void, String>() {
+    class GetConvertedPhotoUrlTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
 
@@ -201,30 +170,26 @@ public class MainActivity extends AppCompatActivity {
             super.onPostExecute(result);
 
             Log.d(TAG, result);
-            Log.d(TAG, "getConvertedPhotoUrlTask finished");
 
-            /*
-            <image_process_response>
-                <request_id>010afc13-6bba-44dd-b278-4f3bd1e41946</request_id>
-                <status>OK</status>
-                <result_url>http://worker-images.ws.pho.to/i1/3BCB160A-691A-458B-9161-67AFA8A9EAA0.png</result_url>
-                <result_url_alt>http://worker-images.ws.pho.to.s3.amazonaws.com/i1/3BCB160A-691A-458B-9161-67AFA8A9EAA0.png</result_url_alt>
-                <nowm_image_url>http://worker-images.ws.pho.to/i1/3BCB160A-691A-458B-9161-67AFA8A9EAA0.png</nowm_image_url>
-            </image_process_response>
-            */
+            if (result == null) {
+                return;
+            }
 
-//            String convertedImageUrl = parseXml(result, false); // no, we don't need the request id
+            if (result.contains("Bad Request")) {
+                Toast.makeText(getApplicationContext(), "There was a problem with the URL", Toast.LENGTH_LONG).show();
+                mDialog.hide();
+                return;
+            }
 
             String convertedImageUrl = result.substring(result.indexOf("<result_url>") + 12,result.indexOf("</result_url>")); // add 12 so we don't get tag with value
-
             // now that we have the url of the converted image, call the next task to download it
-            getConvertedPhotoTask.execute(convertedImageUrl);
+            new GetConvertedPhotoTask().execute(convertedImageUrl);
         }
-    };
+    }
 
     // AsyncTask #3
 
-    AsyncTask<String, Void, Bitmap> getConvertedPhotoTask = new AsyncTask<String, Void, Bitmap>() {
+    class GetConvertedPhotoTask extends AsyncTask<String, Void, Bitmap> {
         @Override
         protected Bitmap doInBackground(String... params) {
 
@@ -251,43 +216,20 @@ public class MainActivity extends AppCompatActivity {
                 mDialog.dismiss();
             }
 
+            if (bitmap == null) {
+                Toast.makeText(getApplicationContext(),
+                        "There was an error converting the photo. Please try again.",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
             mImageView.setImageBitmap(bitmap);
+
+            // todo: hide keyboard
 
             Log.d(TAG, "getConvertedPhotoTask finished");
         }
-    };
-
-//    private String parseXml(String xml, boolean needRequestId) {
-//        int event;
-//        try {
-//            event = mParser.getEventType();
-//
-//            while (event != XmlPullParser.END_DOCUMENT)  {
-//                String name = mParser.getName();
-//                switch (event) {
-//                    case XmlPullParser.START_TAG:
-//                        break;
-//                    case XmlPullParser.END_TAG:
-//                        if (needRequestId && name.equals("request_id")){
-//                            String requestId = mParser.getAttributeValue(null, "value");
-//                            Log.d(TAG, "parseXml " + requestId);
-//                            return requestId;
-//                        }
-//                        if (name.equals("result_url")) {
-//                            String resultUrl = mParser.getAttributeValue(null, "value");
-//                            Log.d(TAG, "parseXml " + resultUrl);
-//                            return resultUrl;
-//                        }
-//                        break;
-//                }
-//                event = mParser.next();
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
+    }
 
     private static String hmacSha1(String value, String key)
             throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
