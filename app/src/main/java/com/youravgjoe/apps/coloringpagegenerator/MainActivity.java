@@ -1,6 +1,7 @@
 package com.youravgjoe.apps.coloringpagegenerator;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -10,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
@@ -145,13 +147,16 @@ public class MainActivity extends AppCompatActivity {
     // AsyncTask #2
 
     class GetConvertedPhotoUrlTask extends AsyncTask<String, Void, String> {
+
+        String mRequestId;
+
         @Override
         protected String doInBackground(String... params) {
 
-            String requestId = params[0];
+            mRequestId = params[0];
 
             try {
-                String fullUrl = BASE_URL_GET + requestId;
+                String fullUrl = BASE_URL_GET + mRequestId;
 
                 OkHttpClient client = new OkHttpClient();
                 Request request = new Request.Builder().url(fullUrl).build();
@@ -174,10 +179,14 @@ public class MainActivity extends AppCompatActivity {
             if (result == null) {
                 return;
             }
-
             if (result.contains("Bad Request")) {
                 Toast.makeText(getApplicationContext(), "There was a problem with the URL", Toast.LENGTH_LONG).show();
                 mDialog.hide();
+                return;
+            }
+            // if the task is still running, call this same task again, and end this one
+            if (result.contains("InProgress")) {
+                new GetConvertedPhotoUrlTask().execute(mRequestId);
                 return;
             }
 
@@ -225,7 +234,8 @@ public class MainActivity extends AppCompatActivity {
 
             mImageView.setImageBitmap(bitmap);
 
-            // todo: hide keyboard
+            InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(mImageView.getWindowToken(), 0);
 
             Log.d(TAG, "getConvertedPhotoTask finished");
         }
