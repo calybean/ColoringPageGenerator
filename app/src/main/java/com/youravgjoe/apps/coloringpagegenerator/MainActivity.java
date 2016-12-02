@@ -10,6 +10,7 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.URLUtil;
@@ -101,15 +102,19 @@ public class MainActivity extends AppCompatActivity {
                 imm.hideSoftInputFromWindow(mImageView.getWindowToken(), 0);
 
                 String input = mInput.getText().toString().trim();
-
-                // check for invalid input
-                if (!URLUtil.isValidUrl("http://" + input)) {
-                    Toast.makeText(v.getContext(), "URL is invalid", Toast.LENGTH_LONG).show();
+                // make sure it's not empty
+                if (input.isEmpty()) {
+                    Toast.makeText(v.getContext(), "Please enter a url", Toast.LENGTH_LONG).show();
                     return;
                 }
-                // make sure it starts with http or https
+                // make sure it starts with http:// or https://
                 if (!input.startsWith("http://") && !input.startsWith("https://")) {
                     input = "http://" + input;
+                }
+                // make sure it's a valid URL
+                if (!Patterns.WEB_URL.matcher(input).matches()) {
+                    Toast.makeText(v.getContext(), "URL is invalid", Toast.LENGTH_LONG).show();
+                    return;
                 }
 
                 String fullXml = XML_PART_1 + input + XML_TO_USE;
@@ -234,7 +239,6 @@ public class MainActivity extends AppCompatActivity {
             // if the task is still running, call this same task again, and end this one
             if (result.contains("InProgress")) {
                 new GetConvertedPhotoUrlTask().execute(mRequestId);
-//                Log.d(TAG, "Task still in progress, trying again...");
                 mRetryCount++;
 
                 if (mRetryCount == 30) {
