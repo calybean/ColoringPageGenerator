@@ -23,6 +23,7 @@ import android.widget.Toast;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.sql.Time;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -72,7 +73,9 @@ public class MainActivity extends AppCompatActivity {
     // change this one to the one you're testing
     private static final String XML_TO_USE = XML_PART_2_6;
 
-    private int mRetryCount;
+    private long mStartTime;
+    private long mEndTime;
+    private static long FIVE_SECONDS = 5000000000L;
 
     CoordinatorLayout mCoordinatorLayout;
     ImageView mImageView;
@@ -119,10 +122,10 @@ public class MainActivity extends AppCompatActivity {
 
                 String fullXml = XML_PART_1 + input + XML_TO_USE;
 
-                mRetryCount = 0;
-
                 // call task to start the photo conversion process
                 new ConvertPhotoTask().execute(fullXml);
+                // get start time
+                mStartTime = System.nanoTime();
             }
         });
 
@@ -239,9 +242,10 @@ public class MainActivity extends AppCompatActivity {
             // if the task is still running, call this same task again, and end this one
             if (result.contains("InProgress")) {
                 new GetConvertedPhotoUrlTask().execute(mRequestId);
-                mRetryCount++;
 
-                if (mRetryCount == 30) {
+                mEndTime = System.nanoTime();
+                if (mEndTime - mStartTime >= FIVE_SECONDS) {
+                    Log.d(TAG, "time running: " + (mEndTime - mStartTime));
                     mDialog.setMessage("Still working...");
                 }
 
@@ -292,8 +296,7 @@ public class MainActivity extends AppCompatActivity {
 
             mImageView.setImageBitmap(bitmap);
 
-            Log.d(TAG, "getConvertedPhotoTask finished");
-            Log.d(TAG, "retry count: " + mRetryCount);
+            Log.d(TAG, "getConvertedPhotoTask finished in " + ((mEndTime - mStartTime) / 1000000) + "ms");
         }
     }
 
