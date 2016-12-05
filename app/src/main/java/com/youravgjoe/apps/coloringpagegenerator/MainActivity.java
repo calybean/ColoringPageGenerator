@@ -13,7 +13,6 @@ import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -23,7 +22,6 @@ import android.widget.Toast;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Time;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -52,30 +50,33 @@ public class MainActivity extends AppCompatActivity {
 
     // testing different methods of photo editing:
 
-    // 1. cartoon + deblurring
-    private static final String XML_PART_2_1 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    // 1. cartoon with anistropic=true
+    private static final String XML_PART_2_1 = "</image_url><methods_list><method><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
-    // 2. more different cartoon
-    private static final String XML_PART_2_2 = "</image_url><methods_list><method><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    // 2. deblurring + cartoon with anistropic=true
+    private static final String XML_PART_2_2 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
     // 3. adaptive cartoon + cartoon
-    private static final String XML_PART_2_3 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    private static final String XML_PART_2_3 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
     // 4. adaptive cartoon + cartoon with anistropic=true
-    private static final String XML_PART_2_4 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    private static final String XML_PART_2_4 = "</image_url><methods_list><method order=\"1\"><name>adaptive_cartoon</name></method><method order=\"2\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
     // 5. deblurring + adaptive cartoon + cartoon with anistropic=true
-    private static final String XML_PART_2_5 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>adaptive_cartoon</name></method><method order=\"3\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    private static final String XML_PART_2_5 = "</image_url><methods_list><method order=\"1\"><name>deblurring</name></method><method order=\"2\"><name>adaptive_cartoon</name></method><method order=\"3\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
     // 6. desaturation + deblurring + adaptive cartoon + cartoon with anistropic=true
-    private static final String XML_PART_2_6 = "</image_url><methods_list><method order=\"1\"><name>desaturation</name></method><method order=\"2\"><name>deblurring</name></method><method order=\"3\"><name>adaptive_cartoon</name></method><method order=\"4\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+    private static final String XML_PART_2_6 = "</image_url><methods_list><method order=\"1\"><name>desaturation</name></method><method order=\"2\"><name>deblurring</name></method><method order=\"3\"><name>adaptive_cartoon</name></method><method order=\"4\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
+
+    // 7. desaturation + deblurring + cartoon with anistropic=true
+    private static final String XML_PART_2_7 = "</image_url><methods_list><method order=\"1\"><name>desaturation</name></method><method order=\"2\"><name>deblurring</name></method><method order=\"3\"><name>cartoon</name><params>use_anisotropic=TRUE;fill_solid_color=1;target_color=(255,255,255);resize_to=1000;</params></method></methods_list><result_format>png</result_format><result_size>1500</result_size></image_process_call>";
 
     // change this one to the one you're testing
-    private static final String XML_TO_USE = XML_PART_2_6;
+    private static final String XML_TO_USE = XML_PART_2_7;
 
     private long mStartTime;
     private long mEndTime;
-    private static long FIVE_SECONDS = 5000000000L;
+    private final static long FIVE_SECONDS = 5000000000L;
 
     CoordinatorLayout mCoordinatorLayout;
     ImageView mImageView;
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
         mImageView = (ImageView) findViewById(R.id.image_view);
         mInput = (EditText) findViewById(R.id.input);
         mDialog = new ProgressDialog(this);
+        mDialog.setCancelable(false);
 
         Button convertButton = (Button) findViewById(R.id.convert);
         convertButton.setOnClickListener(new View.OnClickListener() {
@@ -144,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // AsyncTask #1
+    // AsyncTask #1: Hit Pho.to POST api to kick off photo converting task
 
     class ConvertPhotoTask extends AsyncTask<String, Void, String> {
         @Override
@@ -166,6 +168,8 @@ public class MainActivity extends AppCompatActivity {
                         SIGN_DATA + signData +
                         KEY + getResources().getString(R.string.key) +
                         APP_ID + getResources().getString(R.string.app_id);
+
+                Log.d(TAG, "full url: " + fullUrl);
 
                 OkHttpClient client = new OkHttpClient();
                 Request request = new Request.Builder().url(fullUrl).build();
@@ -201,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // AsyncTask #2
+    // AsyncTask #2: Hit Pho.to GET api to get converted image URL
 
     class GetConvertedPhotoUrlTask extends AsyncTask<String, Void, String> {
 
@@ -258,7 +262,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // AsyncTask #3
+    // AsyncTask #3: Download final photo from URL
 
     class GetConvertedPhotoTask extends AsyncTask<String, Void, Bitmap> {
         @Override
